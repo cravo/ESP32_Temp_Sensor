@@ -6,8 +6,7 @@
 #include <ESP8266WiFi.h>
 #endif
 
-const char* ssid = "";
-const char* password = "";
+#include "secrets.h"
 
 void wifi_connection_setup()
 {

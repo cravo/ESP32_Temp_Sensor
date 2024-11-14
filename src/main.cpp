@@ -9,10 +9,12 @@ void setup(void)
   Serial.begin(9600);
   wifi_connection_setup();
   temperature_setup();
-  web_server_setup();
+  web_server_setup();  
 }
 
 void loop(void) 
 {
   temperature_update();
+
+  delay(1000);
 }
