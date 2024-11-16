@@ -11,7 +11,7 @@
 void wifi_connection_setup()
 {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(wifi_ssid, wifi_password);
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED) 
     {
