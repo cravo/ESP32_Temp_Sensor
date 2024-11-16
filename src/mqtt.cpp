@@ -61,7 +61,7 @@ void mqtt_loop()
 
 void mqtt_send_temperature(float temperature)
 {
-    String temperature_string(temperature);
+    String temperature_string("{ \"value\" : " + String(temperature) + " }");
 
     mqtt_client.publish(mqtt_topic_temperature, temperature_string.c_str());
 }
