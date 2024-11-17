@@ -51,10 +51,6 @@ void mqtt_loop()
   {
     mqtt_reconnect();
   }
-  else
-  {
-
-  }
 
   mqtt_client.loop();
 }
