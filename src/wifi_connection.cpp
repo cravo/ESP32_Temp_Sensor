@@ -8,6 +8,8 @@
 
 #include "secrets.h"
 
+char wifi_ip_address[16];
+
 void wifi_connection_setup()
 {
     WiFi.mode(WIFI_STA);
@@ -21,4 +23,11 @@ void wifi_connection_setup()
 
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+
+    sprintf(wifi_ip_address, "%s", WiFi.localIP().toString().c_str());
+}
+
+const char * wifi_connection_ip()
+{
+    return wifi_ip_address;
 }
