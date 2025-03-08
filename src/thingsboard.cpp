@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <PubSubClient.h>
+#include <Update.h>
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -177,6 +178,8 @@ void thingsboard_process_message(String topic, String message)
         // this is just the message telling us what our current firmware is
         Serial.println("CURRENT FIRMWARE INFO RECORDED");
         thingsboard_firmware_info = firmwareInfo;
+        thingsboard_send_current_firmware_info();
+        delay(1);
       }
       else
       {
@@ -228,14 +231,28 @@ void thingsboard_message_received(char * topic, byte * message, unsigned int len
     {
       Serial.println("Got fw response message");
 
+      if(thingsboard_firmware_update_bytes_downloaded == 0)
+      {
+        // first chunk, start the update
+        if(!Update.begin(thingsboard_firmware_update_info.size))
+        {
+          Serial.println("Not enough space to begin OTA update!");
+          return;
+        }
+
+        Serial.println("OTA update started");
+      }
       if(thingsboard_firmware_update_bytes_downloaded < thingsboard_firmware_update_info.size)
       {
         Serial.print("Getting chunk ");
         Serial.println(String(thingsboard_current_firmware_chunk).c_str());
 
-        //todo: Here we need to append the update data to a file
-        //OR perhaps abandon this approach and use the Arduino OTA library
-        //to download from a URL.
+        int written = Update.write(message, length);
+        if(written != length)
+        {
+          Serial.println("OTA write error!");
+          return;
+        }
 
         thingsboard_firmware_update_bytes_downloaded += length;
         thingsboard_current_firmware_chunk += 1;
@@ -277,7 +294,7 @@ void thingsboard_reconnect()
 }
 
 void thingsboard_setup()
-{
+{ 
   thingsboard_firmware_info.size = 0;
   thingsboard_firmware_info.title = "Initial";
   thingsboard_firmware_info.version = "v0";
@@ -294,15 +311,30 @@ void thingsboard_do_firmware_update()
   delay(1);
 
   Serial.println("Updating firmware...");
-  //todo: Actually do the firmware update
-  Serial.println("Updated.");
 
-  thingsboard_firmware_info = thingsboard_firmware_update_info;
-  thingsboard_firmware_info.state = "UPDATED";
-  thingsboard_send_current_firmware_info();
+  if(Update.end(true))
+  {
+    Serial.println("Updated.  Rebooting...");
+
+    thingsboard_firmware_info = thingsboard_firmware_update_info;
+    thingsboard_firmware_info.state = "UPDATED";
+    thingsboard_send_current_firmware_info();
+      
+    delay(1000);
+
+    ESP.restart();
+  }
+  else
+  {
+    Serial.print("Update failed.  Error: ");
+    Serial.println(Update.getError());
+
+    thingsboard_firmware_info.state = "FAILED";
+    thingsboard_send_current_firmware_info();
+    delay(1);
+  }
 
   thingsboard_firmware_received = false;
-  delay(1);
 }
 
 void thingsboard_update()
